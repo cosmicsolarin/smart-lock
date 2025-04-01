@@ -11,11 +11,7 @@ export const connectDB = async () => {
   }
 
   try {
-    const { connection } = await mongoose.connect(MONGODB_URI as string, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-      bufferCommands: false, // Disable buffering of commands before a connection is established
-    });
+    const { connection } = await mongoose.connect(MONGODB_URI as string);
 
     isConnected = connection.readyState === 1; // 1 means connected
 
