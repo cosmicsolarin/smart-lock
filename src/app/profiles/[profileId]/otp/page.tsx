@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation"; // You can use `useRouter` for navigation
 import axios from "axios";
+import { use } from "react";
 
-const OtpPage = ({ params }: { params: { profileId: string } }) => {
+// In Next.js 15, we need to unwrap params before using them
+const OtpPage = ({ params }: { params: Promise<{ profileId: string }> }) => {
   const [otpSent, setOtpSent] = useState(false);
   const [otp, setOtp] = useState("");
   const [otpVerified, setOtpVerified] = useState(false);
@@ -12,13 +14,22 @@ const OtpPage = ({ params }: { params: { profileId: string } }) => {
   const [loading, setLoading] = useState(false); // Add loading state for async actions
   const router = useRouter();
 
+  // Unwrap the params promise
+  const { profileId } = use(params);
+
+  useEffect(() => {
+    if (!profileId) {
+      setError("Profile ID is not available. Please check the URL.");
+    }
+  }, [profileId]);
+
   // Handle OTP generation
   const handleGenerateOtp = async () => {
     setLoading(true);
     try {
       // Send request to backend to generate OTP with profileId and action in body
       const response = await axios.post(`/api/otp`, {
-        profileId: params.profileId,
+        profileId: profileId,
         action: "generate", // Indicate action as "generate"
       });
       if (response.status === 200) {
@@ -38,7 +49,7 @@ const OtpPage = ({ params }: { params: { profileId: string } }) => {
     try {
       // Send OTP and profileId in request body for verification
       const response = await axios.post(`/api/otp`, {
-        profileId: params.profileId,
+        profileId: profileId,
         otp,
         action: "verify", // Indicate action as "verify"
       });
@@ -67,7 +78,7 @@ const OtpPage = ({ params }: { params: { profileId: string } }) => {
             <button
               onClick={handleGenerateOtp}
               className="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition duration-300"
-              disabled={loading}
+              disabled={loading || !profileId}
             >
               {loading ? "Generating OTP..." : "Generate OTP"}
             </button>
@@ -85,7 +96,7 @@ const OtpPage = ({ params }: { params: { profileId: string } }) => {
             <button
               onClick={handleVerifyOtp}
               className="bg-green-500 text-white py-2 px-4 rounded-md mt-4 hover:bg-green-600 transition duration-300 w-full"
-              disabled={loading}
+              disabled={loading || !otp}
             >
               {loading ? "Verifying..." : "Verify OTP"}
             </button>
